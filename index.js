@@ -6,6 +6,7 @@ const PORT = process.env.PORT || 3001
 
 app.use(express.json())
 app.use(cors())
+app.use(express.static('dist'))
 
 const getMaxId = () => {
   const maxId = notes.length > 0 ? Math.max(...notes.map(note => note.id)) : 0
