@@ -1,14 +1,27 @@
-DELETE http://localhost:3001/api/notes/1
+DELETE http://localhost:3000/api/notes/67aa7f997f5368d69f807508
 
 
 ###
-GET http://localhost:3001/api/notes
+GET http://localhost:3000/api/notes
 
 ###
-POST http://localhost:3001/api/notes
+GET http://localhost:3000/api/notes/67aa80df0767d8e7450fcec0
+
+
+###
+POST http://localhost:3000/api/notes
 Content-Type: application/json
 
 {
-    "content": "HTML is very great",
+    "content": "HTML",
+    "important": true
+}
+
+###
+PUT http://localhost:3000/api/notes/67aa80df0767d8e7450fcec0
+Content-Type: application/json
+
+{
+    "content": "MAs ricaaaaaaaaaaaaa",
     "important": true
 }

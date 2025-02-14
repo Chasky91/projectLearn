@@ -16,6 +16,19 @@ const getMaxId = () => {
   return maxId + 1
 }
 
+
+
+const errorHandler = (err, req, res, next) => {
+  console.error(err.message)
+  if(err.name === 'CastError') {
+    return res.status(400).send({err:'malformated id'})
+  } else if(err.name === 'ValidationError') { 
+    return res.status(400).json({err:err.message})
+  }
+
+  next(err)
+}
+
 app.get('/', (request, response) => {
   response.send('<h1>Hello World!</h1>')
 })
@@ -26,37 +39,44 @@ app.get('/api/notes', (request, response) => {
   })
 })
 
-app.get('/api/notes/:id', (req, res) => {
-    const id = Number(req.params.id)
-    const note =  notes.find(note => note.id === id)
-    if (!note) {
-      res.status(404).send('Note not found, no encontrado')
-    } else {
+app.get('/api/notes/:id', (req, res, next) => {
+
+    Note.findById(req.params.id).then( note => {
+      if (note) {
         res.json(note)
-    }    
+      } else {
+        res.status(404).json(note)
+      }
+    }).catch(error => next(error))
+
+
 })
 
-app.delete('/api/notes/:id', (req, res) => {
-    const id = Number(req.params.id)
-    notes = notes.filter(note => note.id !== id)
-    res.status(204).end()
+app.delete('/api/notes/:id', (req, res, next) => {
+    const id = req.params.id
+    Note.findByIdAndDelete(id)
+      .then(result => {
+        res.status(204).end()
+      })
+      .catch(error => next(error))
 })
 
-app.post('/api/notes', (req, res) => {
+app.post('/api/notes', (req, res, next) => {
   
   const body = req.body
-  if(!body.content) { 
-      res.status(400).json({
-        err:"Content is required, that missing"
-      })
-  }
-  const note = {
-    content: body.content,
-    important: Boolean(body.important) || false,
-    id: getMaxId()
-  }
-  notes = notes.concat(note)
-  res.status(201).json(note)
+
+  const note = new Note({
+    content:body.content,
+    important:body.inportant || false
+  })
+  
+  note.save()
+    .then( saveNote => {
+      res.json(saveNote)
+    })
+    .catch(error => {
+      next(error)
+    })
 })
 
 app.post('/api/notes', (req, res) => {
@@ -65,6 +85,28 @@ app.post('/api/notes', (req, res) => {
   console.log(note)
   res.status(200).json(note)
 })
+
+app.put('/api/notes/:id', (req, res, next) => {
+  const id = req.params.id
+  const  {content, important} = req.body
+
+  Note.findByIdAndUpdate(id, {content, important}, {new:true, runValidators:true, context: 'query' }) 
+    .then(updateNote => {
+      res.json(updateNote)
+    })
+    .catch(error => {
+       next(error)
+    })
+})
+
+const unknownEndpoint = (request, response) => {
+  response.status(404).send({ error: 'unknown endpoint' })
+}
+
+// controlador de solicitudes con endpoint desconocido
+app.use(unknownEndpoint)
+
+app.use(errorHandler)
 
 app.listen(PORT, () => {
   console.log(`Server running on port localhost:${PORT}`)
